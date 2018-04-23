@@ -1,0 +1,11 @@
+
+<!DOCTYPE TissueMeshData
+  PUBLIC "SYSTEM" "TissueMeshData.dtd">
+<TissueMeshData DataType="Raw" FileName="lattice3D.raw.gz" Name="lattice3D">
+   <MeshData XCount="70" YCount="70" ZCount="60">
+      <Resolution Units="mm" X="1.000000" Y="1.000000" Z="1.000000"/>
+   </MeshData>
+   <TissueData Count="1">
+      <Tissue Color="4718592" Density="1010.000000" Name="TestMaterial" Priority="10" UserData="17" Value="1" Visible="Yes"/>
+   </TissueData>
+</TissueMeshData>
