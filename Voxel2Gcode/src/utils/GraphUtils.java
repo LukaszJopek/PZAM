@@ -32,12 +32,11 @@ public class GraphUtils {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public static void createGraph(int[][] cclMatrix, int component, Connectivity connectivity) {
-		Graph<Vertex, Edge> g = new SimpleGraph<>(Edge.class);
+	public static GcodeGraph createGraph(int[][] cclMatrix, int component, Connectivity connectivity) {
 		Vertex startPoint = initializePath(cclMatrix,component, Connectivity.Eight_Connectivity);
 		if (startPoint == null) {
 			//System.err.println("Brak punktów dla komponentu : "+component);
-			return;
+			return new GcodeGraph();
 		}
 		//System.out.println("punkt startowy: "+startPoint.getVertexType().toString());
 		
@@ -46,17 +45,11 @@ public class GraphUtils {
 		GcodeGraph gCodeGraph = new GcodeGraph();
 		
 		if (startPoint.getVertexType() == AdjacencyType.Connectivity || startPoint.getVertexType() == AdjacencyType.End_Point) {
-			//showComponent(cclMatrix, component);
-			//System.out.println("One path scheme ( "+startPoint.getVertexType().toString()+ " )");
-			//System.out.println("One path scheme ( "+startPoint.getPosition().toString()+" component = "+component);
+
 			Edge path = pathTracking(cclMatrix, component, startPoint, connectivity);
-			System.out.println("dlugosc sciezki = "+path.getSize());
 			if(path.getSize() > 0) {
 			List<Point> reduced = SeriesReducer.reduce(ImageUtils.convertPoint2DToPoint(path.getSortedCurve()), 0.01);
 			gCodeGraph.setReducedPath(reduced);
-			//System.out.println("Length of sorted curve is = "+path.getSortedCurve().size());
-			//System.out.println("Length of reduced sorted curve is = "+reduced.size());
-			//System.out.println("Length of path is = "+path.getSize());
 			ArrayList<Point2D> points = new ArrayList<Point2D>();
 			for(Point p: reduced) {
 				points.add(new Point2D(p.getX(), p.getY()));
@@ -77,16 +70,13 @@ public class GraphUtils {
 			
 		}
 		else {
-			System.out.println("Graph Scheme");
+			//System.out.println("Graph Scheme");
 			Graph<Vertex, Edge> graph = generateGraph(cclMatrix, component, startPoint, connectivity);
-			showGraph(graph);
+			//showGraph(graph);
 			gCodeGraph.setSimpleGraph(graph);
 		}
 		
-		//g1.
-		
-		//System.out.println("GcodeGraph is valid: "+graph.isValid());
-		
+		return gCodeGraph;
 	}
 	
 	private static List<Point> edge2SimplifiedPath(Edge edge) {
@@ -148,7 +138,7 @@ public class GraphUtils {
 	
 	private static Graph<Vertex, Edge> generateGraph(int[][] cclMatrix, int component,Vertex vertex, Connectivity connectivity) {
 		List<Vertex> vertexList = getALLVertex(cclMatrix, component);
-		System.out.println("Found "+(vertexList.size() + 1)+" vertexs");
+		//System.out.println("Found "+(vertexList.size() + 1)+" vertexs");
 		List<Edge> edgeList = new ArrayList<Edge>();
 		Graph<Vertex, Edge> g = new SimpleGraph<>(Edge.class);
 		

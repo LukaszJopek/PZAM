@@ -1,5 +1,5 @@
 package gcode;
 
 public enum GCodeCommand {
-G92, E0, G28, 
+INITIAL,G0, G1, NSLICE,STOP 
 }

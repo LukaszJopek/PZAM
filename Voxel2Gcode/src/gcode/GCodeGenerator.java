@@ -1,30 +1,33 @@
 package gcode;
 
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jgrapht.Graph;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import java.util.Set;
 
 import core.Image;
 import core.ImageInfo;
+import gcode.stateMachines.EventType;
+import gcode.stateMachines.FilamentControlStateMachine;
 import imageProcessing.BoundaryDetector;
 import imageProcessing.Geometry;
 import imageProcessing.Geometry.Axis;
 import imageProcessing.ccl.MatrixComponents;
+import imageProcessing.graph.Edge;
+import imageProcessing.graph.GcodeGraph;
+import imageProcessing.graph.GcodeGraph.PathCodeType;
 import utils.GCodeUtils;
 import utils.GraphUtils;
 import utils.GraphUtils.Connectivity;
 import utils.ImageUtils;
 import utils.Point2D;
-import utils.Point3D;
 
 public class GCodeGenerator {
 private Image image;
 private GCodeProperties gCodeProperties;
+public enum LayerType{
+	FIRST, NON_FIRST
+}
 public GCodeGenerator(Image image, GCodeProperties gCodeProperties) {
 	this.image = image;
 	this.gCodeProperties = gCodeProperties;
@@ -44,69 +47,180 @@ public void setCodeProperties(GCodeProperties codeProperties) {
 public void execute() {
 	Geometry imageGeometry = new Geometry(image.getImageInfo(), 1f, 1f, 1f);
 	List<GCodeBlock> header = createHeader();
-	List<List<GCodeBlock>> sliceList = new ArrayList<List<GCodeBlock>>();
+	List<List<String>> sliceList = new ArrayList<List<String>>();
 	for(int i=0;i<image.getImageInfo().getDepth();i++) {
 		System.out.println("processing "+i+" slice from: "+image.getImageInfo().getDepth());
 		sliceList.add( generateGCodeAtSlice(imageGeometry,i) );
 	}
 	
-	//GCodeUtils.gCodeWriter(sliceList, header, gCodeProperties);
+	GCodeUtils.gCodeWriter(sliceList, header, gCodeProperties);
 }
-private List<GCodeBlock> generateGCodeAtSlice(Geometry geometry, int nSlice) {
-	//byte[][] raster = image.getRaster(nSlice);	
-	List<GCodeBlock> gcodeBlockList = new ArrayList<GCodeBlock>();	
-/*	for( int i = 0 ;i<image.getImageInfo().getHeigth();i++) {				
-		gcodeBlockList.addAll(generateGCodeAtLine(geometry,raster,i,nSlice));
-		gcodeBlockList.add(jumpToNewPosotion(geometry, nSlice, i)); // nowa linia po y 
-	}
-	gcodeBlockList.add(jumpToNewPosotion(geometry, nSlice+1, 0)); // nowa linia po z 
-*/	
-	System.out.println("Xmm size: "+geometry.getxCellSize());
-	createFistLayer(geometry,nSlice);
-	
-	
-	
-	
-	return gcodeBlockList;	
+private List<String> generateGCodeAtSlice(Geometry geometry, int nSlice) {
+	return createLayer(geometry,nSlice,getLayerType(nSlice));
+}
+private LayerType getLayerType(int nSlice) {
+	return nSlice == 0 ? LayerType.FIRST : LayerType.NON_FIRST;
 }
 
-private List<GCodeBlock> createFistLayer(Geometry imageGeometry, int nSlice) {
+private List<String> createLayer(Geometry imageGeometry, int nSlice, LayerType layerType) {
+	
 	BufferedImage raster = ImageUtils.byteArray2BufferedImage(image.getRaster(nSlice), image.getImageInfo());
 	BufferedImage resizedImage = ImageUtils.resizeImageWithHint(raster, imageGeometry, image.getImageInfo(), BufferedImage.TYPE_BYTE_GRAY);
 	ImageInfo resizedImageInfo = new ImageInfo("Resized Slice_"+nSlice, resizedImage.getHeight(),resizedImage.getWidth(),image.getImageInfo().getDepth(),image.getImageInfo().getNBits());
 	BoundaryDetector boundaryDetector = new BoundaryDetector(ImageUtils.convertToByteArray(resizedImage), resizedImageInfo, gCodeProperties);
 	boundaryDetector.execute();
 	
+	List<GcodeGraph> layerGcodeList = new ArrayList<GcodeGraph>();
+	
 	for(int i = 0; i<boundaryDetector.getBoundaryList().size();i++) {
-		byte[][] skeletonized = ImageUtils.skeletonize(boundaryDetector.getBoundaryList().get(i), resizedImageInfo);
-/*		try {
-			ImageUtils.DisplayImage(skeletonized, resizedImageInfo, "Skeletonized Boundary");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-		MatrixComponents matrixComponents = new MatrixComponents(ImageUtils.convertTypeByte2Int( skeletonized ));
+		byte[][] skeletonizedBoundary = ImageUtils.skeletonize(boundaryDetector.getBoundaryList().get(i), resizedImageInfo);
+		MatrixComponents matrixComponents = new MatrixComponents(ImageUtils.convertTypeByte2Int( skeletonizedBoundary ));
 		int[][] newMatrix = matrixComponents.getLabeledMatrix();
 		
 		for(int j = 1 ; j< matrixComponents.getNumberOfComponents();j++) {
-			GraphUtils.createGraph(newMatrix, j, Connectivity.Eight_Connectivity);
+			layerGcodeList.add(GraphUtils.createGraph(newMatrix, j, Connectivity.Eight_Connectivity));
 		}		
-		System.out.println("Iteration nr "+i+" found: "+matrixComponents.getNumberOfComponents()+" objects...");
+		System.out.println("Slice : ["+nSlice+"] boundary detector iteration nr "+i+", found: "+matrixComponents.getNumberOfComponents()+" objects...");
+		
+	}
+	
+	List<String> gCodeCommands = new ArrayList<String>();
+	
+	switch (layerType) {
+	case FIRST:
+		gCodeCommands = createFirstLayer(imageGeometry, layerGcodeList,nSlice);
+		break;
+	case NON_FIRST:
+		gCodeCommands = createLayer(imageGeometry, layerGcodeList,nSlice);
+		break;
+	default:
+		System.err.println("No layer type set. Set to 'First'.");
+		break;
 	}
 	   
-	   
-	return null;
+	System.out.println("Generated of "+gCodeCommands.size()+" G-CODE commands.");
+//	for(String command: gCodeCommands) {
+//		System.out.println("Command: "+command);
+//	}
+	
+	return gCodeCommands;
 }
 
-private GCodeBlock jumpToNewPosotion(Geometry geometry, int nSlice, int i) {
+private List<String> createFirstLayer(Geometry geometry, List<GcodeGraph> layerGcodeList, int slice) {
+	List<String> gCodeCommands = new ArrayList<String>();
+	FilamentControlStateMachine fsm = FilamentControlStateMachine.getIntance();
+	fsm.setGeometry(geometry);
+	
+	for (GcodeGraph g: layerGcodeList) {
+		if (g.isValid()) {
+			if( g.getPathCodeType().equals(PathCodeType.PATH) ) {
+				List<Point2D> points = g.getPath();
+				for (int i = points.size()-1; i>=0;i--) {
+						if (i == 0) 
+							gCodeCommands.add(fsm.generateNewCommnand(EventType.NEW_PATH, points.get(i), slice));
+						
+						gCodeCommands.add(fsm.generateNewCommnand(EventType.NEW_POINT, points.get(i), slice));
+				}
+			}
+			if( g.getPathCodeType().equals(PathCodeType.GRAPH) ) {
+				Set<Edge> paths = g.getSimpleGraph().edgeSet(); // narazie tylko wyciagania samych sciezek
+				for (Edge edge : paths) {
+					List<Point2D> points = edge.getSortedCurve();
+					for (int i = points.size()-1; i>=0;i--) {
+						if (i == 0) 
+							gCodeCommands.add(fsm.generateNewCommnand(EventType.NEW_PATH, points.get(i), slice));
+						
+						gCodeCommands.add(fsm.generateNewCommnand(EventType.NEW_POINT, points.get(i), slice));
+				}
+					
+				}
+			}
+		}
+		else {
+			//System.err.println("Non valid G-Code Graph object !");
+		}
+	}
+	return gCodeCommands;
+}
+private List<String> createLayer(Geometry geometry, List<GcodeGraph> layerGcodeList, int slice) {
+	List<String> gCodeCommands = new ArrayList<String>();
+	FilamentControlStateMachine fsm = FilamentControlStateMachine.getIntance();
+	fsm.setGeometry(geometry);
+	
+	// przejscie do nowej warstwy
+	GcodeGraph firstPath = getFistValidStructure(layerGcodeList);
+	if(firstPath != null) {
+		List<Point2D> points = new ArrayList<Point2D>();
+		if( firstPath.getPathCodeType().equals(PathCodeType.PATH) ) {
+			points.addAll(firstPath.getPath());
+		}
+		else {
+			Set<Edge> paths = firstPath.getSimpleGraph().edgeSet();
+			for (Edge path: paths) {
+				points.addAll(path.getSortedCurve());
+			}
+		}
+		for (int i = 0; i<points.size();i++) {
+			if (i == 0) 
+				gCodeCommands.add(fsm.generateNewCommnand(EventType.LAYER_END, points.get(i), slice));
+			
+			gCodeCommands.add(fsm.generateNewCommnand(EventType.NEW_POINT, points.get(i), slice));
+		}
+	}	
+	
+	for (GcodeGraph g: layerGcodeList) {
+		if (g.isValid()) {
+			if( g.getPathCodeType().equals(PathCodeType.PATH) ) {
+				List<Point2D> points = g.getPath();
+				for (int i = 0; i<points.size();i++) {
+						if (i == 0) 
+							gCodeCommands.add(fsm.generateNewCommnand(EventType.NEW_PATH, points.get(i), slice));
+						
+						gCodeCommands.add(fsm.generateNewCommnand(EventType.NEW_POINT, points.get(i), slice));
+				}
+			}
+			if( g.getPathCodeType().equals(PathCodeType.GRAPH) ) {
+				Set<Edge> paths = g.getSimpleGraph().edgeSet(); // narazie tylko wyciagania samych sciezek
+				for (Edge edge : paths) {
+					List<Point2D> points = edge.getSortedCurve();
+					for (int i = 0; i<points.size();i++) {
+						if (i == 0) 
+							gCodeCommands.add(fsm.generateNewCommnand(EventType.NEW_PATH, points.get(i), slice));
+						
+						gCodeCommands.add(fsm.generateNewCommnand(EventType.NEW_POINT, points.get(i), slice));
+				}
+					
+				}
+			}
+		}
+		else {
+			//System.err.println("Non valid G-Code Graph object !");
+		}
+	}
+	return gCodeCommands;
+}
+
+private GcodeGraph getFistValidStructure(List<GcodeGraph> layerGcodeList) {
+	for(int i=0;i<layerGcodeList.size();i++) {
+		if(layerGcodeList.get(i).isValid()) {
+			return layerGcodeList.remove(i);
+		}
+	}
+	return null;
+}
+private GCodeBlock jumpToNewPosition(Point2D newPosition) {
+	return null;
+}
+private GCodeBlock jumpToNewSlice(Geometry geometry, int nSlice, int i) {
 	float xmm = geometry.getPositionInMM(0, Axis.OX);
-	float ymm = geometry.getPositionInMM(i+1, Axis.OY);
-	float zmm = geometry.getPositionInMM(nSlice, Axis.OZ);
+	float ymm = geometry.getPositionInMM(0, Axis.OY);
+	float zmm = geometry.getPositionInMM(nSlice+1, Axis.OZ);
 	String newLine = GCodeUtils.createNewLineCommand(xmm,ymm,zmm, gCodeProperties);
 	GCodeBlock newLineCommand = new GCodeBlock(newLine);
 	System.out.println(newLine);
 	return newLineCommand;
 }
+
 private List<GCodeBlock> generateGCodeAtLine(Geometry geometry,byte[][] raster, int line, int nSlice) {
 	
 	List<GCodeBlock> gcodeListAtLine = new ArrayList<GCodeBlock>();

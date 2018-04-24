@@ -4,13 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jgrapht.Graph;
-import org.jgrapht.graph.SimpleGraph;
-
 import core.reducer.Point;
 import utils.ImageUtils;
 import utils.Point2D;
 
 public class GcodeGraph {
+public enum PathCodeType {
+	PATH, GRAPH, NONE
+}
+private PathCodeType pathCodeType = null;
 private List<Point2D> path = null;
 private Graph<Vertex,Edge> simpleGraph = null;
 
@@ -18,9 +20,11 @@ public GcodeGraph() {
 }
 public GcodeGraph(List<Point2D> path) {
 	this.path = path;
+	this.pathCodeType = PathCodeType.PATH;
 }
 public GcodeGraph(Graph<Vertex,Edge>  simpleGraph) {
 	this.simpleGraph = simpleGraph;
+	this.pathCodeType = PathCodeType.GRAPH;
 }
 
 public boolean isValid() {
@@ -38,15 +42,21 @@ public List<Point2D> getPath() {
 }
 public void setPath(List<Point2D> path) {
 	this.path = path;
+	this.pathCodeType = PathCodeType.PATH;
 }
 public void setReducedPath(List<Point> reducedCurce) {
 	this.path = ImageUtils.convertPointToPoint2D(reducedCurce);
+	this.pathCodeType = PathCodeType.PATH;
 }
 public Graph<Vertex, Edge> getSimpleGraph() {
 	return simpleGraph;
 }
 public void setSimpleGraph(Graph<Vertex, Edge> simpleGraph) {
 	this.simpleGraph = simpleGraph;
+	this.pathCodeType = PathCodeType.GRAPH;
+}
+public PathCodeType getPathCodeType() {
+	return this.pathCodeType;
 }
 
 }
