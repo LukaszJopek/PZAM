@@ -42,7 +42,7 @@ import core.sorter.SortPoint;
 
 public class Main {
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, InterruptedException {
 		// TODO Auto-generated method stub
 		Class<Main> m = Main.class;
 		System.out.println("Main class fully name: "+m.getCanonicalName());
@@ -65,6 +65,7 @@ public class Main {
 		byte[][] erosionImage = ImageUtils.basicMorphologicalOperations(ImageUtils.convertToByteArray(resizedImage),1,Operations.Erosion);
 		try {
 			ImageUtils.DisplayImage(ImageUtils.convertToByteArray(resizedImage), imageInfo,"Orginal Resized");
+			Thread.sleep(1);
 			//ImageUtils.DisplayImage(erodedImage, imageInfo,"EROZJA");
 			ImageUtils.DisplayImage(erosionImage, imageInfo,"Dilated");
 			//ImageUtils.DisplayImage(erosionImage, imageInfo,"Erosion 2");

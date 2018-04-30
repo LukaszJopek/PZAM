@@ -4,10 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import core.reducer.Point;
-import core.reducer.SeriesReducer;
 import core.sorter.SortPoint;
-import utils.ImageUtils;
 import utils.Point2D;
 
 public class Edge {

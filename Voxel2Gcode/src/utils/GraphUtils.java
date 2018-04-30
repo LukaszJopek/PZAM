@@ -3,11 +3,7 @@ package utils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-
 import org.jgrapht.Graph;
-import org.jgrapht.graph.DefaultDirectedGraph;
-import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
 import org.jgrapht.traverse.GraphIterator;
@@ -25,37 +21,62 @@ public class GraphUtils {
 	public enum Connectivity{
 		Four_connectibity, Eight_Connectivity
 	}
-	public static final int min_path_length = 5;
+	public static final int min_path_length = 3;
 	public static final double simplificiation_epsilon = 0.01;
 
 	public GraphUtils() {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public static GcodeGraph createGraph(int[][] cclMatrix, int component, Connectivity connectivity) {
+	public static List<GcodeGraph> createGraph(int[][] cclMatrix, int component, Connectivity connectivity) {
+		List<Vertex> vertexList = getALLVertex(cclMatrix, component);
+		for(Vertex v: vertexList) {
+			if(v.getVertexType().equals(AdjacencyType.Branch_Point)) {
+				cclMatrix[(int)v.getPosition().getyMM()][(int)v.getPosition().getxMM()] = 0;
+			}
+		}
+		
 		Vertex startPoint = initializePath(cclMatrix,component, Connectivity.Eight_Connectivity);
 		if (startPoint == null) {
-			//System.err.println("Brak punktów dla komponentu : "+component);
-			return new GcodeGraph();
+			System.err.println("Brak punktów dla komponentu : "+component);
+			return new ArrayList<GcodeGraph>();
 		}
 		//System.out.println("punkt startowy: "+startPoint.getVertexType().toString());
 		
 		
 		//System.out.println("One path scheme ( "+startPoint.getVertexType().toString()+ " )");
-		GcodeGraph gCodeGraph = new GcodeGraph();
+		List<GcodeGraph> gCodeGraphList = new ArrayList<GcodeGraph>();
+		GcodeGraph gCodeGraph =  createStructure(cclMatrix, component, connectivity, startPoint);
+		gCodeGraphList.add(gCodeGraph);
+		Vertex unConnectedPart = findUnConnectedPart(cclMatrix, component);
+		while(unConnectedPart != null) {
+			gCodeGraphList.add(createStructure(cclMatrix, component, connectivity, unConnectedPart));
+			//System.out.println("adding new gCodeGraph...");
+			unConnectedPart = findUnConnectedPart(cclMatrix, component);
+		}
 		
+		//System.out.println("gCodeGraph List size = "+gCodeGraphList.size());
+		
+		return gCodeGraphList;
+	}
+
+	private static GcodeGraph createStructure(int[][] cclMatrix, int component, Connectivity connectivity, Vertex startPoint) {
+		GcodeGraph gCodeGraph = new GcodeGraph();
 		if (startPoint.getVertexType() == AdjacencyType.Connectivity || startPoint.getVertexType() == AdjacencyType.End_Point) {
 
 			Edge path = pathTracking(cclMatrix, component, startPoint, connectivity);
 			if(path.getSize() > 0) {
-			List<Point> reduced = SeriesReducer.reduce(ImageUtils.convertPoint2DToPoint(path.getSortedCurve()), 0.01);
-			gCodeGraph.setReducedPath(reduced);
+			List<Point> reduced = SeriesReducer.reduce(ImageUtils.convertPoint2DToPoint(path.getAllPoints()), 0.01);
+			gCodeGraph.setReducedPath(ImageUtils.convertPoint2DToPoint(path.getAllPoints()));
+			//gCodeGraph.setReducedPath(reduced);
 			ArrayList<Point2D> points = new ArrayList<Point2D>();
 			for(Point p: reduced) {
 				points.add(new Point2D(p.getX(), p.getY()));
 			}
 			
-			byte[][] image = ImageUtils.visualizeGraph2(points, cclMatrix.length, cclMatrix[0].length);
+			
+			
+/*			byte[][] image = ImageUtils.visualizeGraph2(points, cclMatrix.length, cclMatrix[0].length);
 			
 			ImageInfo imageInfo = new ImageInfo("",cclMatrix[0].length,cclMatrix.length, 1, 8);
 			try {
@@ -65,7 +86,8 @@ public class GraphUtils {
 			} catch (IOException | InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}*/
+			
 			}
 			
 		}
@@ -73,9 +95,9 @@ public class GraphUtils {
 			//System.out.println("Graph Scheme");
 			Graph<Vertex, Edge> graph = generateGraph(cclMatrix, component, startPoint, connectivity);
 			//showGraph(graph);
-			gCodeGraph.setSimpleGraph(graph);
+			//gCodeGraph.setSimpleGraph(graph);
+			gCodeGraph = new GcodeGraph();
 		}
-		
 		return gCodeGraph;
 	}
 	
@@ -109,9 +131,7 @@ public class GraphUtils {
 				continue;
 			}
 			edge.addPoint(nextPoint);
-			eraseVisitedPoint(cclMatrix, nextPoint);
-			//System.out.println(nextPoint.toString());
-			
+			eraseVisitedPoint(cclMatrix, nextPoint);			
 			nextPoint =  getNextPoint(nextPoint, cclMatrix, component);
 		}
 				
@@ -159,7 +179,7 @@ public class GraphUtils {
 		}
 		
 		
-		byte[][] image = ImageUtils.visualizeGraph(edgeList, cclMatrix.length, cclMatrix[0].length);
+/*		byte[][] image = ImageUtils.visualizeGraph(edgeList, cclMatrix.length, cclMatrix[0].length);
 		
 		ImageInfo imageInfo = new ImageInfo("",cclMatrix[0].length,cclMatrix.length, 1, 8);
 		try {
@@ -169,7 +189,7 @@ public class GraphUtils {
 		} catch (IOException | InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 		//Graph<Vertex, Edge> g = new SimpleGraph<>(Edge.class);
 		
 		return g;
@@ -275,7 +295,7 @@ public class GraphUtils {
 		for (int i=0; i<cclMatrix.length;i++) {
 			for(int j=0; j<cclMatrix[0].length;j++) {
 				if (getAdjacecnyType(cclMatrix, i, j, component) == AdjacencyType.Branch_Point){
-					return new Vertex(j,i,AdjacencyType.Branch_Point);
+					return new Vertex(i,j,AdjacencyType.Branch_Point);
 				}
 			}
 		}
@@ -283,7 +303,7 @@ public class GraphUtils {
 		for (int i=0; i<cclMatrix.length;i++) {
 			for(int j=0; j<cclMatrix[0].length;j++) {
 				if (getAdjacecnyType(cclMatrix, i, j, component) == AdjacencyType.Connectivity){
-					return new Vertex(j,i,AdjacencyType.Connectivity);
+					return new Vertex(i,j,AdjacencyType.Connectivity);
 				}
 			}
 		}
@@ -291,7 +311,7 @@ public class GraphUtils {
 		for (int i=0; i<cclMatrix.length;i++) {
 			for(int j=0; j<cclMatrix[0].length;j++) {
 				if (getAdjacecnyType(cclMatrix, i, j, component) == AdjacencyType.End_Point){
-					return new Vertex(j,i,AdjacencyType.End_Point);
+					return new Vertex(i,j,AdjacencyType.End_Point);
 				}
 			}
 		}		
@@ -299,6 +319,19 @@ public class GraphUtils {
 		return null;
 	}
 	
+	public static Vertex findUnConnectedPart(int[][] cclMatrix, int component) {
+		
+		for (int i=0; i<cclMatrix.length;i++) {
+			for(int j=0; j<cclMatrix[0].length;j++) {
+				AdjacencyType adjacecnyType = getAdjacecnyType(cclMatrix, i, j, component);
+				if (!adjacecnyType.equals(AdjacencyType.None) ){
+					//System.out.println("New Vertex found... in "+i+" "+j+" as "+adjacecnyType.toString());
+					return new Vertex(i,j,adjacecnyType);
+				}
+			}
+		}
+		return null;
+	}
 	public static AdjacencyType getAdjacecnyType(int [][] cclMatrix, int i, int j, int component) {
 		if(cclMatrix[i][j] != component)return AdjacencyType.None;
 		

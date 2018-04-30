@@ -1,5 +1,7 @@
 package gcode.stateMachines;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import imageProcessing.Geometry;
@@ -48,8 +50,8 @@ public class EndState implements State{
 	}
 
 	@Override
-	public String generateCGodeCommand() {
-		return "";
+	public List<String> generateCGodeCommand() {
+		return new ArrayList();
 	}
 
 	@Override
@@ -75,4 +77,23 @@ public class EndState implements State{
 	public double getDistance(Point2D previousPoint) {	
 		return nextPointPosition.getDistance(previousPoint);
 	}
+
+	@Override
+	public void setPreviousPoint(Point2D previousPoint) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setPreviousState(State prevState) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setCurrentE(float currentE) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

@@ -10,7 +10,7 @@ import utils.ImageUtils;
 import utils.ImageUtils.Operations;
 
 public class BoundaryDetector {
-	private int maxIteration = 100;
+	private int maxIteration = 1000;
 	private int minNumberOfPixel = 5;
 	private byte[][] image;
 	private ImageInfo imageInfo;
@@ -40,19 +40,19 @@ public class BoundaryDetector {
 	
 
 	private byte[][] findBoudaryByErosion(byte[][] image, int n,ImageInfo imageInfo, GCodeProperties gCodeProperties) {
-		byte[][] firsrtErosion = ImageUtils.copyArray(image);
-		byte[][] secondErosion = ImageUtils.copyArray(firsrtErosion);
-		ImageUtils.basicMorphologicalOperations(firsrtErosion,n-1,Operations.Erosion);
+		byte[][] firstErosion = ImageUtils.copyArray(image);
+		byte[][] secondErosion = ImageUtils.copyArray(firstErosion);
+		ImageUtils.basicMorphologicalOperations(firstErosion,n-1,Operations.Erosion);
 		ImageUtils.basicMorphologicalOperations(secondErosion,n,Operations.Erosion);
 		this.image = ImageUtils.copyArray(secondErosion);
-		return ImageUtils.imageSubstraction(firsrtErosion, secondErosion);
+		return ImageUtils.imageSubstraction(firstErosion, secondErosion);
 	}
 
 	public void execute() {
 		int i = 0;
        	while(true) {
        		i++;
-       		byte[][] bx = findBoudaryByErosion(image,1, imageInfo, codeProperties);
+       		byte[][] bx = findBoudaryByErosion(image,4, imageInfo, codeProperties);
        		if (!ImageUtils.havePixel(bx, (byte) 1, minNumberOfPixel) || i > maxIteration) {
        			break;
        		}

@@ -1,7 +1,10 @@
 package gcode.stateMachines;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
+import gcode.GCodeMovementCommands;
 import gcode.GCodeProperties;
 import imageProcessing.Geometry;
 import imageProcessing.Geometry.Axis;
@@ -9,8 +12,11 @@ import utils.GCodeUtils;
 import utils.Point2D;
 
 public class NextSlice implements State{
+	float currentE;
+	private State prevState = null;
 	private int slice;
 	private Geometry geometry;
+	private Point2D previousPoint;
 	private Point2D nextPointPosition;
 	private float zShift = 0;
 
@@ -21,7 +27,7 @@ public class NextSlice implements State{
 
 	@Override
 	public float getE() {
-		return -GCodeProperties.filamentConstFactor;
+		return currentE;
 	}
 
 	@Override
@@ -54,9 +60,13 @@ public class NextSlice implements State{
 	}
 
 	@Override
-	public String generateCGodeCommand() {
-		float zmm = geometry.getPositionInMM(slice, Axis.OZ);
-		return GCodeUtils.createCommand(nextPointPosition.getxMM(),nextPointPosition.getyMM(),zmm, getE(), getF());
+	public List<String> generateCGodeCommand() {
+		System.out.println("New Layer Command");
+		List<String> commands = new ArrayList<String>();
+		Double zmm = (double) geometry.getPositionInMM(slice, Axis.OZ);
+		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM(),(Double)nextPointPosition.getyMM(),zmm, null, getF()));
+		System.out.println(commands.get(0));
+		return commands;
 	}
 	@Override
 	public State getNextState(Map<StateType, State> stateList, EventType eventType) {
@@ -76,6 +86,23 @@ public class NextSlice implements State{
 	@Override
 	public double getDistance(Point2D previousPoint) {	
 		return nextPointPosition.getDistance(previousPoint);
+	}
+
+	@Override
+	public void setPreviousPoint(Point2D previousPoint) {
+		this.previousPoint = previousPoint;
+		
+	}
+
+	@Override
+	public void setPreviousState(State prevState) {
+		this.prevState = prevState;	
+	}
+
+	@Override
+	public void setCurrentE(float currentE) {
+		this.currentE = currentE;
+		
 	}
 
 }

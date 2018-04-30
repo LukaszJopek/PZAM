@@ -2,6 +2,7 @@ package gcode;
 
 public class GCodeProperties {
 public static final float filamentShiftConst = 0.1f;
+public static final float filamentPrinterConst = 0.01f;
 public static final float filamentConstFactor = 0.1f;
 public static final float printingSpeed = 1000f;
 public static final float HighSpeed = 2000f;

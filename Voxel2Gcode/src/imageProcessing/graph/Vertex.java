@@ -1,6 +1,5 @@
 package imageProcessing.graph;
 
-import java.util.List;
 import java.util.UUID;
 
 import utils.Point2D;

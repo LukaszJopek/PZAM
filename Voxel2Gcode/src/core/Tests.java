@@ -1,5 +1,6 @@
 package core;
 
+
 import gcode.stateMachines.EventType;
 import gcode.stateMachines.FilamentControlStateMachine;
 import imageProcessing.Geometry;
@@ -13,7 +14,7 @@ public class Tests {
 		Geometry geometry = new Geometry(imageInfo, 0.01f, 0.01f, 0.01f);
 		FilamentControlStateMachine fsm = FilamentControlStateMachine.getIntance();
 		fsm.setGeometry(geometry);
-		String s = fsm.generateNewCommnand(EventType.NEW_POINT, new Point2D(0.33, 0.45), 0);
+		java.util.List<String> s = fsm.generateNewCommnand(EventType.NEW_POINT, new Point2D(0.33, 0.45), 0);
 		System.out.println("Command = "+s);
 		s = fsm.generateNewCommnand(EventType.NEW_POINT, new Point2D(23, 11), 0);
 		System.out.println("Command = "+s);

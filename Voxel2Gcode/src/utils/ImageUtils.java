@@ -9,7 +9,9 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
@@ -17,12 +19,15 @@ import javax.swing.JLabel;
 
 import core.ImageInfo;
 import gcode.GCodeProperties;
+import gcode.stateMachines.EventType;
 import ij.process.ByteProcessor;
 import imageProcessing.Geometry;
 import imageProcessing.Geometry.Axis;
 import core.reducer.Point;
 import core.reducer.PointImpl;
 import imageProcessing.graph.Edge;
+import imageProcessing.graph.GcodeGraph;
+import imageProcessing.graph.GcodeGraph.PathCodeType;
 
 public class ImageUtils {
 public static enum Operations{Erosion, Dilate}
@@ -373,13 +378,79 @@ public static Point3D convert3D(ImageInfo imageInfo, int id) {
     	
     	return image;
     }
-	private static void addLayer(byte[][] base, byte[][] newLayer) {
+	public static void addLayer(byte[][] base, byte[][] newLayer) {
 		for (int i =0 ; i< base.length; i++) {
 			for(int j=0;j<base[0].length; j++) {
 				base[i][j] = (byte) (base[i][j] + newLayer[i][j]);
 			}
 		}
 	}
+	public static void addLayer(int[][] base, int[][] newLayer) {
+		for (int i =0 ; i< base.length; i++) {
+			for(int j=0;j<base[0].length; j++) {
+				base[i][j] = (byte) (base[i][j] + newLayer[i][j]);
+			}
+		}
+	}
+	
+	public static byte[][] visualizeLayer2(List<GcodeGraph> layerGcodeList, int height, int width) {
+		byte[][] image = new byte[height][width];
+		for (GcodeGraph g: layerGcodeList) {
+			if (g.isValid()) {
+				if( g.getPathCodeType().equals(PathCodeType.PATH) ) {
+					List<Point2D> points = g.getPath();
+					for (int i = points.size()-1; i>=0;i--) {			
+						image[(int)points.get(i).getyMM()][(int)points.get(i).getxMM()] = 1;
+					}
+				}
+				if( g.getPathCodeType().equals(PathCodeType.GRAPH) ) {
+					Set<Edge> paths = g.getSimpleGraph().edgeSet(); // narazie tylko wyciagania samych sciezek
+					for (Edge edge : paths) {
+						List<Point2D> points = edge.getSortedCurve();
+						for (int i = points.size()-1; i>=0;i--) {
+							image[(int)points.get(i).getyMM()][(int)points.get(i).getxMM()] = 1;
+					}
+						
+					}
+				}
+			}
+			else {
+				//System.err.println("Non valid G-Code Graph object !");
+			}
+		}
+		return image;
+	}
+	
+    public static byte[][] standarizeImage(byte[][] img){
+    	byte[][] standarized = new byte[img.length][img[0].length];
+    	for (int i=0;i<img.length;i++) {
+    		for(int j=0;j<img[0].length;j++) {
+    			if(img[i][j]<0) standarized[i][j] = 0;
+    			else standarized[i][j] = 1;
+    		}
+    	} 
+    	return standarized;
+   }
+    public static byte[][] standarizeImage(int[][] img){
+    	byte[][] standarized = new byte[img.length][img[0].length];
+    	for (int i=0;i<img.length;i++) {
+    		for(int j=0;j<img[0].length;j++) {
+    			if(img[i][j]>0) standarized[i][j] = 1;
+    			else standarized[i][j] = 0;
+    		}
+    	} 
+    	return standarized;
+   }
+    public static byte[][] standarizeImageGrayLevel(int[][] img){
+    	byte[][] standarized = new byte[img.length][img[0].length];
+    	for (int i=0;i<img.length;i++) {
+    		for(int j=0;j<img[0].length;j++) {
+    			if(img[i][j]>0) standarized[i][j] = (byte) img[i][j];
+    			else standarized[i][j] = 0;
+    		}
+    	} 
+    	return standarized;
+   }
     
     private static byte[][] prepareImage(byte[][] image) {
    		for (int i=0;i<image.length;i++) {
@@ -424,5 +495,19 @@ public static Point3D convert3D(ImageInfo imageInfo, int id) {
     		points.add(new Point2D(point.getX(), point.getY()));
     	}
     	return points;
+    }
+    public static Set<Integer> uniqueVal(int[][] matrix){
+    	Set<Integer> unique = new HashSet<Integer>();
+    	for(int i=0; i<matrix.length;i++) {
+    		for(int j=0;j<matrix[0].length;j++) {
+    			unique.add(matrix[i][j]);
+    		}
+    	}
+    	//System.out.println("Liczba wartosci unikalnych: "+unique.size());
+    	//for( Integer val: unique) {
+    	//	System.out.println("wartosc: "+val);
+    	//}
+		return unique;
+    	
     }
 }

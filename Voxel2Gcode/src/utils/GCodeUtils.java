@@ -67,9 +67,36 @@ public static String InitialMove(float xmm, float ymm, float zmm, GCodePropertie
 public static String createPrintingCommand(float xmm, float ymm, float zmm, GCodeProperties gCodeProperties) {
 	return createNewLineCommand(xmm, ymm, zmm, gCodeProperties);
 }
-public static String createCommand(double xmm, double ymm, double zmm, float E, float F) {
+/*public static String createCommand(double xmm, double ymm, double zmm, float E, float F) {
 	String gcodeCommand = GCodeMovementCommands.G1.toString();
 	return gcodeCommand + " X"+xmm+" Y"+ymm+" Z"+zmm+" E"+E+" F"+F;
+}*/
+
+public static String createCommand(GCodeMovementCommands G, Double xmm, Double ymm, Double zmm, Float E, Float F) {
+	String gcodeCommand = "";
+	if(G != null) {
+		gcodeCommand = G.toString();
+	}
+	if(xmm != null) {
+		gcodeCommand = gcodeCommand + " X"+xmm+ " ";
+	}
+	if(ymm != null) {
+		gcodeCommand = gcodeCommand + " Y"+ymm+ " ";
+	}
+	if(zmm != null) {
+		gcodeCommand = gcodeCommand + " Z"+zmm+ " ";
+	}
+	if(E != null) {
+		gcodeCommand = gcodeCommand + " E"+E+ " ";
+	}
+	if(F != null) {
+		gcodeCommand = gcodeCommand + " F"+F+ " ";
+	}
+	return gcodeCommand;
 }
+public static String createCommand(GCodeMovementCommands G, String comment) {
+	return "; "+comment;
+}
+
 
 }

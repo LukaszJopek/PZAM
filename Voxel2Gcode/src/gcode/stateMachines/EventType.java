@@ -1,5 +1,5 @@
 package gcode.stateMachines;
 
 public enum EventType {
-	NEW_POINT, NEW_PATH, LAYER_END, MODEL_END
+	INITIAL, LAST_POINT, NEW_POINT, NEW_PATH, LAYER_END, MODEL_END
 }

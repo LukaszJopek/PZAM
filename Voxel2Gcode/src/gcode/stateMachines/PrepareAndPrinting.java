@@ -1,7 +1,10 @@
 package gcode.stateMachines;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
+import gcode.GCodeMovementCommands;
 import gcode.GCodeProperties;
 import imageProcessing.Geometry;
 import imageProcessing.Geometry.Axis;
@@ -9,9 +12,12 @@ import utils.GCodeUtils;
 import utils.Point2D;
 
 public class PrepareAndPrinting implements State{
+	private float currentE;
+	private State prevState = null;
 	private double segmentLength = 0;
 	private int slice;
 	private Geometry geometry;
+	private Point2D previousPoint;
 	private Point2D nextPointPosition;
 	@Override
 	public StateType getState() {
@@ -20,7 +26,7 @@ public class PrepareAndPrinting implements State{
 
 	@Override
 	public float getE() {		
-		return (float) ((GCodeProperties.filamentShiftConst * segmentLength) + GCodeProperties.filamentConstFactor);
+		return currentE;
 	}
 
 	@Override
@@ -53,9 +59,16 @@ public class PrepareAndPrinting implements State{
 	}
 
 	@Override
-	public String generateCGodeCommand() {
-		float zmm = geometry.getPositionInMM(slice, Axis.OZ);
-		return GCodeUtils.createCommand(nextPointPosition.getxMM(),nextPointPosition.getyMM(),zmm, getE(), getF());
+	public List<String> generateCGodeCommand() {
+		List<String> commands = new ArrayList<String>();
+		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " Prepare and Printing "));
+		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G0, null, null, null, null, GCodeProperties.printingSpeed));
+		currentE = prevState.getE();
+		currentE = (float) (currentE + (nextPointPosition.getDistance(previousPoint) + GCodeProperties.filamentConstFactor + GCodeProperties.filamentPrinterConst));
+		commands.add(GCodeUtils.createCommand(null,null, null, null, currentE, null));
+		currentE =  (float) ((GCodeProperties.filamentShiftConst * segmentLength) + GCodeProperties.filamentConstFactor);
+		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM(),(Double)nextPointPosition.getyMM(),null, currentE, getF()));
+		return commands;
 	}
 	@Override
 	public State getNextState(Map<StateType, State> stateList, EventType eventType) {
@@ -63,6 +76,8 @@ public class PrepareAndPrinting implements State{
 		case NEW_POINT:
 			return stateList.get(StateType.PR);
 		case NEW_PATH : 
+			return stateList.get(StateType.ERROR);
+		case LAST_POINT:
 			return stateList.get(StateType.PFM);
 		case LAYER_END :
 			return stateList.get(StateType.NS);
@@ -76,6 +91,23 @@ public class PrepareAndPrinting implements State{
 	public double getDistance(Point2D previousPoint) {	
 		this.segmentLength = nextPointPosition.getDistance(previousPoint);
 		return nextPointPosition.getDistance(previousPoint);
+	}
+
+	@Override
+	public void setPreviousPoint(Point2D previousPoint) {
+		this.previousPoint = previousPoint;
+		
+	}
+
+	@Override
+	public void setPreviousState(State prevState) {
+		this.prevState = prevState;
+		
+	}
+
+	@Override
+	public void setCurrentE(float currentE) {
+		this.currentE = currentE;
 	}
 
 }
