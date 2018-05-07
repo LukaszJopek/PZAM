@@ -1,8 +1,6 @@
 package imageProcessing;
 
 import core.ImageInfo;
-import imageProcessing.Geometry.Axis;
-import utils.GridUtils;
 import utils.Point3D;
 
 public class Geometry {
@@ -55,21 +53,17 @@ private Point3D originPointCalculate() {
 	origin.setPosition(x, y, z);
 	return origin;
 }
-public float getPositionInMM(int position, Axis axis) {
-	float xScaling = GridUtils.getScalingFactor(getxCellSize(), Axis.OX);
-	float yScaling = GridUtils.getScalingFactor(getyCellSize(), Axis.OY);
-	float zScaling = GridUtils.getScalingFactor(getzCellSize(), Axis.OZ);
-	switch(axis){
-		case OX: 
-			return (position - origin.getXCoordinate()) * xScaling;
-		case OY :
-			return (position - origin.getYCoordinate()) * yScaling;
-		case OZ :
-			return (position - origin.getZCoordinate()) * zScaling;
-		default:
+public float getPositionInMM(float position, Axis axis) {
+	switch (axis) {
+	case OX:
+		return position * xCellSize;
+	case OY:
+		return position * yCellSize;
+	case OZ:
+		return position * zCellSize;
+
+	default:
 		return 0;
 	}
 }
-
-
 }

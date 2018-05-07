@@ -66,13 +66,13 @@ public class GraphUtils {
 
 			Edge path = pathTracking(cclMatrix, component, startPoint, connectivity);
 			if(path.getSize() > 0) {
-			List<Point> reduced = SeriesReducer.reduce(ImageUtils.convertPoint2DToPoint(path.getAllPoints()), 0.01);
+			//List<Point> reduced = SeriesReducer.reduce(ImageUtils.convertPoint2DToPoint(path.getAllPoints()), 0.01);
 			gCodeGraph.setReducedPath(ImageUtils.convertPoint2DToPoint(path.getAllPoints()));
 			//gCodeGraph.setReducedPath(reduced);
-			ArrayList<Point2D> points = new ArrayList<Point2D>();
+			/*ArrayList<Point2D> points = new ArrayList<Point2D>();
 			for(Point p: reduced) {
 				points.add(new Point2D(p.getX(), p.getY()));
-			}
+			}*/
 			
 			
 			

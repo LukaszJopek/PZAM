@@ -56,6 +56,7 @@ public class BoundaryDetector {
        		if (!ImageUtils.havePixel(bx, (byte) 1, minNumberOfPixel) || i > maxIteration) {
        			break;
        		}
+       		System.out.println("boudary iteration");
        		boundaryList.add(bx);
     	}
 	}

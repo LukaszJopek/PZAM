@@ -108,5 +108,14 @@ public class Printing implements State {
 		
 	}
 
+	@Override
+	public State getClone() {
+		State state = new Printing();
+		state.setCurrentE(currentE);
+		state.setGeometry(geometry);
+		state.setNextPoint(nextPointPosition);
+		return state;
+	}
+
 
 }

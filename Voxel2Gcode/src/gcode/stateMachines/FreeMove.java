@@ -53,7 +53,7 @@ public class FreeMove implements State{
 	@Override
 	public List<String> generateCGodeCommand() {
 		List<String> commands = new ArrayList<String>();
-		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " Free Move "));
+		//commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " Free Move "));
 		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G0,(Double)nextPointPosition.getxMM(),(Double)nextPointPosition.getyMM(),null,null,null));
 		return commands;
 	}
@@ -101,6 +101,15 @@ public class FreeMove implements State{
 	public void setCurrentE(float currentE) {
 		this.currentE = currentE;
 		
+	}
+
+	@Override
+	public State getClone() {
+		State state = new FreeMove();
+		state.setCurrentE(currentE);
+		state.setGeometry(geometry);
+		state.setNextPoint(nextPointPosition);
+		return state;
 	}
 
 }

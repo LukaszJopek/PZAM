@@ -1,5 +1,8 @@
 package utils;
 
+import gcode.GCodeProperties;
+import imageProcessing.Geometry;
+
 public class Point2D extends Point{
 
 	private double xMM = 0.0;
@@ -53,6 +56,11 @@ public class Point2D extends Point{
 	}
 	public double getDistance(Point2D point) {
 		return Math.sqrt( ((xMM - point.xMM) *  (xMM - point.xMM) ) + ((yMM - point.yMM) *  (yMM - point.yMM)) ); 
+	}
+	public double getFilamentLength(Geometry geometry, Point2D point) {
+		double distance = getDistance(point) ;
+		double filamentConst = (geometry.getxCellSize() * geometry.getyCellSize()) + (GCodeProperties.filamentStreamWidth * GridUtils.TATGER_CELL_SIZE_MM);
+		return distance * filamentConst;
 	}
 	
 	@Override

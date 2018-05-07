@@ -8,6 +8,7 @@ import java.util.List;
 import gcode.GCodeBlock;
 import gcode.GCodeMovementCommands;
 import gcode.GCodeProperties;
+import imageProcessing.Geometry.Axis;
 
 public class GCodeUtils {
  public static String createNewLineCommand(float xmm, float ymm, float zmm, GCodeProperties gCodeProperties) {
@@ -64,13 +65,6 @@ public static String InitialMove(float xmm, float ymm, float zmm, GCodePropertie
 	String gcodeCommand = GCodeMovementCommands.G1.toString();
 	return gcodeCommand + " X"+xmm+" Y"+ymm+" Z"+zmm+" E"+0+" F"+gCodeProperties.getParameterF();
 }
-public static String createPrintingCommand(float xmm, float ymm, float zmm, GCodeProperties gCodeProperties) {
-	return createNewLineCommand(xmm, ymm, zmm, gCodeProperties);
-}
-/*public static String createCommand(double xmm, double ymm, double zmm, float E, float F) {
-	String gcodeCommand = GCodeMovementCommands.G1.toString();
-	return gcodeCommand + " X"+xmm+" Y"+ymm+" Z"+zmm+" E"+E+" F"+F;
-}*/
 
 public static String createCommand(GCodeMovementCommands G, Double xmm, Double ymm, Double zmm, Float E, Float F) {
 	String gcodeCommand = "";
@@ -78,13 +72,13 @@ public static String createCommand(GCodeMovementCommands G, Double xmm, Double y
 		gcodeCommand = G.toString();
 	}
 	if(xmm != null) {
-		gcodeCommand = gcodeCommand + " X"+xmm+ " ";
+		gcodeCommand = gcodeCommand + " X"+GridUtils.getPositionInMM(xmm, Axis.OX)+ " ";
 	}
 	if(ymm != null) {
-		gcodeCommand = gcodeCommand + " Y"+ymm+ " ";
+		gcodeCommand = gcodeCommand + " Y"+GridUtils.getPositionInMM(ymm, Axis.OY)+ " ";
 	}
 	if(zmm != null) {
-		gcodeCommand = gcodeCommand + " Z"+zmm+ " ";
+		gcodeCommand = gcodeCommand + " Z"+GridUtils.getPositionInMM(zmm, Axis.OZ)+ " ";
 	}
 	if(E != null) {
 		gcodeCommand = gcodeCommand + " E"+E+ " ";

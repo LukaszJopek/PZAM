@@ -307,11 +307,14 @@ public static Point3D convert3D(ImageInfo imageInfo, int id) {
 
     public static BufferedImage resizeImageWithHint(BufferedImage originalImage,Geometry geometry, ImageInfo imageInfo, int type){
 		
-    	float xScaling = GridUtils.getScalingFactor(geometry.getxCellSize(), Axis.OX);
-    	float yScaling = GridUtils.getScalingFactor(geometry.getyCellSize(), Axis.OY);
+    	float xScaling = GridUtils.getScalingFactor(geometry, Axis.OX);
+    	float yScaling = GridUtils.getScalingFactor(geometry, Axis.OY);
     	
+    	
+    	System.out.println("Scaling factor is: x= "+yScaling+" y= "+xScaling);
     	int newX = (int) (imageInfo.getWidth() * xScaling);
     	int newY = (int) (imageInfo.getHeigth() * yScaling);
+    	System.out.println("GRID IMAGE SIZE is: "+newY+" to "+newX);
     	
     	BufferedImage resizedImage = new BufferedImage(newX, newY, type);
     	Graphics2D g = resizedImage.createGraphics();

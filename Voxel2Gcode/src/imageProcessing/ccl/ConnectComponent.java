@@ -14,7 +14,7 @@ import java.awt.*;
  */
 public class ConnectComponent
 {
-    final int MAX_LABELS= 80000;
+    final int MAX_LABELS= 800000;
     int next_label = 1;
 
     /**

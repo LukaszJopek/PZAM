@@ -49,10 +49,8 @@ public class Main {
 		Image image = new Image( "D:\\PL\\dydaktyka\\GIT\\Voxel2Gcode\\data\\lattice3D.raw",  70,  70,  60, 8);
 		
 		Geometry imageGeometry = new Geometry(image.getImageInfo(), 1f, 1f, 1f);
-		float pos = imageGeometry.getPositionInMM(23, Axis.OX);
 		//generateGcode(image);
 		GCodeProperties gCodeProperties = new GCodeProperties();
-		gCodeProperties.setFilamentStreamWidth(0.3f);
 
 		BufferedImage originalImage = ImageUtils.byteArray2BufferedImage(image.getRaster(59), image.getImageInfo());
 		BufferedImage resizedImage = ImageUtils.resizeImageWithHint(originalImage, imageGeometry, image.getImageInfo(), BufferedImage.TYPE_BYTE_GRAY);
@@ -216,8 +214,11 @@ public class Main {
        	ImageUtils.DisplayImage(ImageUtils.convertTypeInt2Byte(thninned), imageInfo, "Thinned Image");
        	
        	Image image2 = new Image( "D:\\PL\\dydaktyka\\GIT\\Voxel2Gcode\\data\\lattice3D.raw",  70,  70,  60, 8);
-       	generateGcode(image2);
+       	//generateGcode(image2);
        	
+       	
+     	//Image image2 = new Image( "D:\\MetaMaterialy\\soczewkaPlaska15x15\\lattice3D.raw",  610,  610, 70, 8);
+       	generateGcode(image2);
 //       	UndirectedGraph<String, DefaultEdge> g =
 //       	        new SimpleGraph<String, DefaultEdge>(DefaultEdge.class);
 //       

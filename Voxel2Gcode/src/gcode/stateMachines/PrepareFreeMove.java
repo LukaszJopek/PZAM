@@ -57,15 +57,15 @@ public class PrepareFreeMove implements State {
 		List<String> commands = new ArrayList<String>();
 		currentE = prevState.getE();
 		
-		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " Prepare Free Move "));
+		//commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " Prepare Free Move "));
 		if(prevState.getState().equals(StateType.FM)){
-			currentE = (float) (currentE + (nextPointPosition.getDistance(previousPoint) + GCodeProperties.filamentConstFactor + GCodeProperties.filamentPrinterConst));
-			commands.add(GCodeUtils.createCommand(null,null, null, null, currentE, null));
+			currentE = (float) (currentE + GCodeProperties.filamentConstFactor + GCodeProperties.filamentPrinterConst);
+			commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G0,null, null, null, currentE, null));
 		}
 			
-		
+		currentE = (float) (currentE +(nextPointPosition.getDistance(previousPoint)));
 		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM() , (Double)nextPointPosition.getyMM(),null, currentE, null));
-		currentE = (float) (currentE +(nextPointPosition.getDistance(previousPoint) - GCodeProperties.filamentConstFactor));
+		currentE = (float) (currentE -(GCodeProperties.filamentConstFactor));
 		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G0,null, null, null, currentE, getF()));
 		return commands;
 	}
@@ -73,11 +73,11 @@ public class PrepareFreeMove implements State {
 	public State getNextState(Map<StateType, State> stateList, EventType eventType) {
 		switch (eventType) {
 		case NEW_POINT:
-			return stateList.get(StateType.ERROR);
+			return stateList.get(StateType.PAP);
 		case NEW_PATH : 
 			return stateList.get(StateType.FM);
 		case LAST_POINT:
-			return stateList.get(StateType.ERROR);
+			return stateList.get(StateType.PFM);
 		case LAYER_END :
 			return stateList.get(StateType.NS);
 		case MODEL_END:
@@ -105,5 +105,14 @@ public class PrepareFreeMove implements State {
 	@Override
 	public void setCurrentE(float currentE) {
 		this.currentE = currentE;	
+	}
+
+	@Override
+	public State getClone() {
+		State state = new PrepareFreeMove();
+		state.setCurrentE(currentE);
+		state.setGeometry(geometry);
+		state.setNextPoint(nextPointPosition);
+		return state;
 	}
 }

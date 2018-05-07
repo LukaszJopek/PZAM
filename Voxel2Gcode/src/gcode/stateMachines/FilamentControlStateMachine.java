@@ -49,15 +49,18 @@ public class FilamentControlStateMachine {
 		return stateList;
 	}
 	public List<String> generateNewCommnand(EventType eventType, Point2D nextPoint, int slice) {
-		StateType prevState = state.getState();
+		//geometry.convertPositionInMM(nextPoint);
+		StateType prevStateType = state.getState();
+		State prevState = state.getClone();
 		state = state.getNextState(stateList, eventType);
-		currentE = state.getE();
+		currentE = prevState.getE();
 		if (state.getState() == StateType.ERROR) {
-			System.err.println("Blad stanu. Proba przejscia ze stanu "+prevState.toString()+" pod wplywem wydzarzenia: "+eventType.toString());
+			System.err.println("Blad stanu. Proba przejscia ze stanu "+prevStateType.toString()+" pod wplywem wydzarzenia: "+eventType.toString());
 			return new ArrayList<String>();
 		}	
-		System.out.println("FSM: "+prevState.toString()+" --> "+state.getState().name());
-		state.setPreviousState(state);
+		System.out.println("FSM: "+prevStateType.toString()+" --> "+state.getState().name());
+		state.setCurrentE(prevState.getE());
+		state.setPreviousState(prevState);
 		state.setGeometry(geometry);
 		state.setPreviousPoint(previousPoint);
 		state.setNextPoint(nextPoint);

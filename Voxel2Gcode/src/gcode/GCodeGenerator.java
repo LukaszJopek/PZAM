@@ -47,10 +47,11 @@ public void setCodeProperties(GCodeProperties codeProperties) {
 	this.gCodeProperties = codeProperties;
 }
 public void execute() {
-	Geometry imageGeometry = new Geometry(image.getImageInfo(), 1f, 1f, 1f);
+	//Geometry imageGeometry = new Geometry(image.getImageInfo(), 0.24f, 0.24f, 0.24f);
+	Geometry imageGeometry = new Geometry(image.getImageInfo(), 1.0f, 1.0f, 1.0f);
 	List<GCodeBlock> header = createHeader();
 	List<List<String>> sliceList = new ArrayList<List<String>>();
-	for(int i=0;i<1/*image.getImageInfo().getDepth()*/;i++) {
+	for(int i=0;i<image.getImageInfo().getDepth();i++) {
 		System.out.println("processing "+i+" slice from: "+image.getImageInfo().getDepth());
 		sliceList.add( generateGCodeAtSlice(imageGeometry,i) );
 	}
@@ -68,12 +69,13 @@ private List<String> createLayer(Geometry imageGeometry, int nSlice, LayerType l
 	
 	BufferedImage raster = ImageUtils.byteArray2BufferedImage(image.getRaster(nSlice), image.getImageInfo());
 	BufferedImage resizedImage = ImageUtils.resizeImageWithHint(raster, imageGeometry, image.getImageInfo(), BufferedImage.TYPE_BYTE_GRAY);
+	System.out.println("image resized.");
 	ImageInfo resizedImageInfo = new ImageInfo("Resized Slice_"+nSlice, resizedImage.getHeight(),resizedImage.getWidth(),image.getImageInfo().getDepth(),image.getImageInfo().getNBits());
 	BoundaryDetector boundaryDetector = new BoundaryDetector(ImageUtils.convertToByteArray(resizedImage), resizedImageInfo, gCodeProperties);
 	boundaryDetector.execute();
+	System.out.println("Boundary detected.");
 	
 	List<GcodeGraph> layerGcodeList = new ArrayList<GcodeGraph>();
-	byte[][] allBoundary = new byte[resizedImageInfo.getHeigth()][resizedImageInfo.getWidth()];
 	int[][] allComponents = new int[resizedImageInfo.getHeigth()][resizedImageInfo.getWidth()];
 	
 	for(int i = 0; i<boundaryDetector.getBoundaryList().size();i++) {
@@ -158,6 +160,7 @@ private List<String> createFirstLayer(Geometry geometry, List<GcodeGraph> layerG
 		if (g.isValid()) {
 			if( g.getPathCodeType().equals(PathCodeType.PATH) ) {
 				List<Point2D> points = g.getPath();
+				System.out.println("poisnts size(): "+points.size());
 				for (int i = points.size()-1; i>=0;i--) {
 						if (i == points.size()-1) {
 							gCodeCommands.addAll(fsm.generateNewCommnand(EventType.NEW_PATH, points.get(i), slice));
@@ -211,7 +214,7 @@ private List<String> createLayer(Geometry geometry, List<GcodeGraph> layerGcodeL
 		}
 		for (int i = 0; i<points.size();i++) {
 			if (i == 0) {
-				gCodeCommands.addAll(fsm.generateNewCommnand(EventType.NEW_PATH, points.get(i), slice));
+				gCodeCommands.addAll(fsm.generateNewCommnand(EventType.LAYER_END, points.get(i), slice));
 				}
 			else if (i== points.size()-1) {
 				gCodeCommands.addAll(fsm.generateNewCommnand(EventType.LAST_POINT, points.get(i), slice));
@@ -220,6 +223,8 @@ private List<String> createLayer(Geometry geometry, List<GcodeGraph> layerGcodeL
 			}
 		}
 	}	
+	
+	// warstwa
 	
 	for (GcodeGraph g: layerGcodeList) {
 		if (g.isValid()) {
@@ -264,40 +269,6 @@ private GcodeGraph getFistValidStructure(List<GcodeGraph> layerGcodeList) {
 		}
 	}
 	return null;
-}
-private GCodeBlock jumpToNewPosition(Point2D newPosition) {
-	return null;
-}
-private GCodeBlock jumpToNewSlice(Geometry geometry, int nSlice, int i) {
-	float xmm = geometry.getPositionInMM(0, Axis.OX);
-	float ymm = geometry.getPositionInMM(0, Axis.OY);
-	float zmm = geometry.getPositionInMM(nSlice+1, Axis.OZ);
-	String newLine = GCodeUtils.createNewLineCommand(xmm,ymm,zmm, gCodeProperties);
-	GCodeBlock newLineCommand = new GCodeBlock(newLine);
-	System.out.println(newLine);
-	return newLineCommand;
-}
-
-private List<GCodeBlock> generateGCodeAtLine(Geometry geometry,byte[][] raster, int line, int nSlice) {
-	
-	List<GCodeBlock> gcodeListAtLine = new ArrayList<GCodeBlock>();
-	int lineLength = image.getImageInfo().getWidth();
-	
-	int xPos= 0;
-	float newY = geometry.getPositionInMM(line, Axis.OY);
-	float newZ = geometry.getPositionInMM(nSlice, Axis.OZ);
-	while(xPos < lineLength) {
-		
-		 int blockLength = getHomogeneityBlock(raster,xPos,line);
-		 float newX = geometry.getPositionInMM(xPos+blockLength, Axis.OX);
-		 byte val = raster[line][xPos];
-		 GCodeBlock gCodeBlock = new GCodeBlock(newX, newY, newZ, chooseCommand(val,blockLength),gCodeProperties);
-		 xPos = xPos+blockLength;
-		 System.out.println(gCodeBlock.getCGodeCommand());
-		 gcodeListAtLine.add(gCodeBlock);
-	}
-	
-	return gcodeListAtLine;
 }
 private GCodeMovementCommands chooseCommand(byte val, int blockLength) {
 	switch (val) {

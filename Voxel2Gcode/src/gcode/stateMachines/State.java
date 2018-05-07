@@ -20,4 +20,5 @@ public interface State {
 	public List<String> generateCGodeCommand();
 	public double getDistance(Point2D previousPoint);
 	public State getNextState(Map<StateType, State> stateList, EventType eventType);
+	public State getClone();
 }

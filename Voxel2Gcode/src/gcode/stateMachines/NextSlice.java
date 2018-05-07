@@ -61,11 +61,12 @@ public class NextSlice implements State{
 
 	@Override
 	public List<String> generateCGodeCommand() {
-		System.out.println("New Layer Command");
 		List<String> commands = new ArrayList<String>();
-		Double zmm = (double) geometry.getPositionInMM(slice, Axis.OZ);
+		//commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " Jump to new slice"));
+		Double zmm = (double) slice; /*(double) geometry.convertPositionInMM((float) slice, Axis.OZ,0);*/
+		System.out.println("Z = "+zmm);
 		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM(),(Double)nextPointPosition.getyMM(),zmm, null, getF()));
-		System.out.println(commands.get(0));
+
 		return commands;
 	}
 	@Override
@@ -79,6 +80,8 @@ public class NextSlice implements State{
 			return stateList.get(StateType.NS);
 		case MODEL_END:
 			return stateList.get(StateType.END);
+		case LAST_POINT:
+			return stateList.get(StateType.PFM);
 		default:
 			return stateList.get(StateType.ERROR);
 		}
@@ -103,6 +106,15 @@ public class NextSlice implements State{
 	public void setCurrentE(float currentE) {
 		this.currentE = currentE;
 		
+	}
+
+	@Override
+	public State getClone() {
+		State state = new NextSlice();
+		state.setCurrentE(currentE);
+		state.setGeometry(geometry);
+		state.setNextPoint(nextPointPosition);
+		return state;
 	}
 
 }

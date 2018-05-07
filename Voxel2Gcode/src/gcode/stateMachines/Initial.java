@@ -11,6 +11,7 @@ import utils.GCodeUtils;
 import utils.Point2D;
 
 public class Initial implements State{
+	private Geometry geometry = null;
 	private State prevState = null;
 	private Point2D nextPointPosition;
 
@@ -32,7 +33,7 @@ public class Initial implements State{
 
 	@Override
 	public void setGeometry(Geometry geometry) {
-		
+		this.geometry = geometry;
 	}
 
 	@Override
@@ -96,6 +97,15 @@ public class Initial implements State{
 	public void setCurrentE(float currentE) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public State getClone() {
+		State state = new Initial();
+		state.setCurrentE(0);
+		state.setGeometry(geometry);
+		state.setNextPoint(nextPointPosition);
+		return state;
 	}
 
 }

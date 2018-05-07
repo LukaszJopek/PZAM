@@ -10,6 +10,7 @@ import utils.GCodeUtils;
 import utils.Point2D;
 
 public class EndState implements State{
+	private float currentE = 0;
 	private int slice;
 	private Geometry geometry;
 	private Point2D nextPointPosition;
@@ -92,8 +93,17 @@ public class EndState implements State{
 
 	@Override
 	public void setCurrentE(float currentE) {
-		// TODO Auto-generated method stub
+		this.currentE = currentE;
 		
+	}
+
+	@Override
+	public State getClone() {
+		State state = new EndState();
+		state.setCurrentE(currentE);
+		state.setGeometry(geometry);
+		state.setNextPoint(nextPointPosition);
+		return state;
 	}
 
 }

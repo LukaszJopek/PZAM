@@ -61,13 +61,19 @@ public class PrepareAndPrinting implements State{
 	@Override
 	public List<String> generateCGodeCommand() {
 		List<String> commands = new ArrayList<String>();
-		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " Prepare and Printing "));
+		//commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " Prepare and Printing "));
 		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G0, null, null, null, null, GCodeProperties.printingSpeed));
-		currentE = prevState.getE();
-		currentE = (float) (currentE + (nextPointPosition.getDistance(previousPoint) + GCodeProperties.filamentConstFactor + GCodeProperties.filamentPrinterConst));
-		commands.add(GCodeUtils.createCommand(null,null, null, null, currentE, null));
-		currentE =  (float) ((GCodeProperties.filamentShiftConst * segmentLength) + GCodeProperties.filamentConstFactor);
-		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM(),(Double)nextPointPosition.getyMM(),null, currentE, getF()));
+		if (prevState.getState().equals(StateType.INITIAL)) {
+			commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM(),(Double)nextPointPosition.getyMM(),null, currentE, null));
+			
+		}
+		else {
+			currentE = prevState.getE();
+			currentE = (float) (currentE + GCodeProperties.filamentConstFactor + GCodeProperties.filamentPrinterConst);
+			commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G0,null, null, null, currentE, null));
+			currentE = (float) (currentE + (GCodeProperties.filamentShiftConst * segmentLength));
+			commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM(),(Double)nextPointPosition.getyMM(),null, currentE, getF()));
+		}
 		return commands;
 	}
 	@Override
@@ -108,6 +114,15 @@ public class PrepareAndPrinting implements State{
 	@Override
 	public void setCurrentE(float currentE) {
 		this.currentE = currentE;
+	}
+
+	@Override
+	public State getClone() {
+		State state = new PrepareAndPrinting();
+		state.setCurrentE(currentE);
+		state.setGeometry(geometry);
+		state.setNextPoint(nextPointPosition);
+		return state;
 	}
 
 }

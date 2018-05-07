@@ -85,4 +85,10 @@ public class ErrorState implements State{
 		this.currentE = currentE;	
 	}
 
+	@Override
+	public State getClone() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

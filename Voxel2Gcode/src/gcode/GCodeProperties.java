@@ -1,24 +1,18 @@
 package gcode;
 
 public class GCodeProperties {
-public static final float filamentShiftConst = 0.1f;
-public static final float filamentPrinterConst = 0.01f;
-public static final float filamentConstFactor = 0.1f;
+public static final float filamentShiftConst = 2f;
+public static final float filamentPrinterConst = 0.1f;
+public static final float filamentConstFactor = 2f;
 public static final float printingSpeed = 1000f;
 public static final float HighSpeed = 2000f;
+public static final float filamentStreamWidth = 0.3f;
 
 public int EmptySpace= 0;
 public int Filament = 1;
 private float parameterE;
 private float parameterF;
 private String outPutFilename = "outputCode.gcode";
-private float filamentStreamWidth = 0.0f;
-public float getFilamentStreamWidth() {
-	return filamentStreamWidth;
-}
-public void setFilamentStreamWidth(float filamentStreamWidth) {
-	this.filamentStreamWidth = filamentStreamWidth;
-}
 public String getOutPutFilename() {
 	return outPutFilename;
 }
