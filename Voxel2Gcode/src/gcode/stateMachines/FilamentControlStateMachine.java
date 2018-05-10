@@ -66,6 +66,7 @@ public class FilamentControlStateMachine {
 		state.setNextPoint(nextPoint);
 		state.getDistance(previousPoint);
 		state.setSlice(slice);
+		state.setLastRectract(prevState.getLastRectract());
 		previousPoint = nextPoint;
 		return state.generateCGodeCommand();
 	}

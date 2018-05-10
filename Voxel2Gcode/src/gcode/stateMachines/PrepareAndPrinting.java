@@ -12,6 +12,7 @@ import utils.GCodeUtils;
 import utils.Point2D;
 
 public class PrepareAndPrinting implements State{
+	private double lastRectract = 0;
 	private float currentE;
 	private State prevState = null;
 	private double segmentLength = 0;
@@ -67,9 +68,16 @@ public class PrepareAndPrinting implements State{
 			commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM(),(Double)nextPointPosition.getyMM(),null, currentE, null));
 			
 		}
+		else if(prevState.getState().equals(StateType.NS)) {
+			commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " Prepare And Priting[for new layer]"));
+			currentE = (float) (currentE +(nextPointPosition.getDistanceinMM(previousPoint)));
+			commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM() , (Double)nextPointPosition.getyMM(),null, currentE, null));
+			//currentE = (float) (currentE -(GCodeProperties.filamentConstFactor));
+			//commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G0,null, null, null, currentE, getF()));
+		}
 		else {
 			currentE = prevState.getE();
-			currentE = (float) (currentE + GCodeProperties.filamentConstFactor + GCodeProperties.filamentPrinterConst);
+			currentE = (float) (currentE + lastRectract + GCodeProperties.filamentPrinterConst);
 			commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G0,null, null, null, currentE, null));
 			currentE = (float) (currentE + (GCodeProperties.filamentShiftConst * segmentLength));
 			commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM(),(Double)nextPointPosition.getyMM(),null, currentE, getF()));
@@ -95,8 +103,8 @@ public class PrepareAndPrinting implements State{
 	}
 	@Override
 	public double getDistance(Point2D previousPoint) {	
-		this.segmentLength = nextPointPosition.getDistance(previousPoint);
-		return nextPointPosition.getDistance(previousPoint);
+		this.segmentLength = nextPointPosition.getDistanceinMM(previousPoint);
+		return nextPointPosition.getDistanceinMM(previousPoint);
 	}
 
 	@Override
@@ -122,7 +130,18 @@ public class PrepareAndPrinting implements State{
 		state.setCurrentE(currentE);
 		state.setGeometry(geometry);
 		state.setNextPoint(nextPointPosition);
+		state.setLastRectract(lastRectract);
 		return state;
+	}
+	@Override
+	public void setLastRectract(double filamentRetract) {
+		this.lastRectract = filamentRetract;
+		
+	}
+
+	@Override
+	public double getLastRectract() {
+		return lastRectract;
 	}
 
 }

@@ -12,6 +12,9 @@ public class GcodeGraph {
 public enum PathCodeType {
 	PATH, GRAPH, NONE
 }
+public enum ConnectingType{
+	BEGIN, END
+}
 private PathCodeType pathCodeType = null;
 private List<Point2D> path = null;
 private Graph<Vertex,Edge> simpleGraph = null;
@@ -39,6 +42,22 @@ public List<List<Point2D>> getPixelPaths() {
 }
 public List<Point2D> getPath() {
 	return path;
+}
+public void addPointToPath(List<Point2D> points, ConnectingType connectingType ) {
+	switch (connectingType) {
+	case BEGIN:
+			List<Point2D> tempPath = new ArrayList<Point2D>(); 
+			tempPath.addAll(points);
+			tempPath.addAll(path);
+			path = tempPath;
+		break;
+	case END:
+			path.addAll(points);
+		break;
+
+	default:
+		break;
+	}
 }
 public void setPath(List<Point2D> path) {
 	this.path = path;

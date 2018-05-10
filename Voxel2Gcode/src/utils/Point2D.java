@@ -54,11 +54,17 @@ public class Point2D extends Point{
 			angle=4-Math.abs(yMM)/d;
 		return angle;
 	}
-	public double getDistance(Point2D point) {
+	public double getDistanced(Point2D point) {
 		return Math.sqrt( ((xMM - point.xMM) *  (xMM - point.xMM) ) + ((yMM - point.yMM) *  (yMM - point.yMM)) ); 
 	}
+	public double getDistanceinMM(Point2D point) {
+		double xmm = xMM * GridUtils.TATGER_CELL_SIZE_MM;
+		double ymm = yMM * GridUtils.TATGER_CELL_SIZE_MM;
+		Point2D localGridPoint = new Point2D(point.xMM * GridUtils.TATGER_CELL_SIZE_MM, point.yMM * GridUtils.TATGER_CELL_SIZE_MM);
+		return Math.sqrt( ((xmm - localGridPoint.xMM) *  (xmm - localGridPoint.xMM) ) + ((ymm - localGridPoint.yMM) *  (ymm - localGridPoint.yMM)) ); 		
+	}
 	public double getFilamentLength(Geometry geometry, Point2D point) {
-		double distance = getDistance(point) ;
+		double distance = getDistanceinMM(point) ;
 		double filamentConst = (geometry.getxCellSize() * geometry.getyCellSize()) + (GCodeProperties.filamentStreamWidth * GridUtils.TATGER_CELL_SIZE_MM);
 		return distance * filamentConst;
 	}

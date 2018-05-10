@@ -11,6 +11,7 @@ import utils.GCodeUtils;
 import utils.Point2D;
 
 public class Initial implements State{
+	private double lastRectract  = 0;
 	private Geometry geometry = null;
 	private State prevState = null;
 	private Point2D nextPointPosition;
@@ -59,7 +60,9 @@ public class Initial implements State{
 	@Override
 	public List<String> generateCGodeCommand() {
 		List<String> commands = new ArrayList<String>();
-		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM(),(Double)nextPointPosition.getyMM(),null, null, null));
+		//commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM(),(Double)nextPointPosition.getyMM(),null, null, null));
+		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " Initial... "));
+		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G92,null,null,null, getE(), null));
 		return commands;
 	}
 
@@ -105,7 +108,18 @@ public class Initial implements State{
 		state.setCurrentE(0);
 		state.setGeometry(geometry);
 		state.setNextPoint(nextPointPosition);
+		state.setLastRectract(lastRectract);
 		return state;
+	}
+	@Override
+	public void setLastRectract(double filamentRetract) {
+		this.lastRectract = filamentRetract;
+		
+	}
+
+	@Override
+	public double getLastRectract() {
+		return lastRectract;
 	}
 
 }

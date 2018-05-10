@@ -3,11 +3,15 @@ package utils;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.List;
 
 import gcode.GCodeBlock;
 import gcode.GCodeMovementCommands;
 import gcode.GCodeProperties;
+import gcode.stateMachines.EventType;
+import gcode.stateMachines.FilamentControlStateMachine;
+import gcode.stateMachines.StateType;
 import imageProcessing.Geometry.Axis;
 
 public class GCodeUtils {
@@ -92,5 +96,14 @@ public static String createCommand(GCodeMovementCommands G, String comment) {
 	return "; "+comment;
 }
 
-
+public static List<String> endPrintSequence() {
+	FilamentControlStateMachine filamentControlStateMachine = FilamentControlStateMachine.getIntance();
+	if (filamentControlStateMachine.getState().equals(StateType.END)) {
+		System.out.println("Ending g-code command sequence is already set. Nothing to do. Return.");
+		return new ArrayList<String>();
+	}
+	System.out.println("Creating ending g-code commnads sequence.");
+	return filamentControlStateMachine.generateNewCommnand(EventType.MODEL_END, new Point2D(0,0), 0);
+	
+}
 }

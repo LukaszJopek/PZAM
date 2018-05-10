@@ -48,14 +48,17 @@ public void setCodeProperties(GCodeProperties codeProperties) {
 }
 public void execute() {
 	//Geometry imageGeometry = new Geometry(image.getImageInfo(), 0.24f, 0.24f, 0.24f);
-	Geometry imageGeometry = new Geometry(image.getImageInfo(), 1.0f, 1.0f, 1.0f);
+	//Geometry imageGeometry = new Geometry(image.getImageInfo(), 0.25f, 0.25f, 0.25f);
+	Geometry imageGeometry = new Geometry(image.getImageInfo(), 0.35f, 0.35f, 0.35f);
+	//Geometry imageGeometry = new Geometry(image.getImageInfo(), 1.0f, 1.0f, 1.0f);
 	List<GCodeBlock> header = createHeader();
 	List<List<String>> sliceList = new ArrayList<List<String>>();
-	for(int i=0;i<image.getImageInfo().getDepth();i++) {
+	for(int i=0;i<4/*image.getImageInfo().getDepth();*/;i++) {
 		System.out.println("processing "+i+" slice from: "+image.getImageInfo().getDepth());
 		sliceList.add( generateGCodeAtSlice(imageGeometry,i) );
 	}
 	
+	sliceList.add(GCodeUtils.endPrintSequence());
 	GCodeUtils.gCodeWriter(sliceList, header, gCodeProperties);
 }
 private List<String> generateGCodeAtSlice(Geometry geometry, int nSlice) {
@@ -160,7 +163,7 @@ private List<String> createFirstLayer(Geometry geometry, List<GcodeGraph> layerG
 		if (g.isValid()) {
 			if( g.getPathCodeType().equals(PathCodeType.PATH) ) {
 				List<Point2D> points = g.getPath();
-				System.out.println("poisnts size(): "+points.size());
+				System.out.println("points size(): "+points.size());
 				for (int i = points.size()-1; i>=0;i--) {
 						if (i == points.size()-1) {
 							gCodeCommands.addAll(fsm.generateNewCommnand(EventType.NEW_PATH, points.get(i), slice));
@@ -270,32 +273,6 @@ private GcodeGraph getFistValidStructure(List<GcodeGraph> layerGcodeList) {
 	}
 	return null;
 }
-private GCodeMovementCommands chooseCommand(byte val, int blockLength) {
-	switch (val) {
-	case 0:
-		return GCodeMovementCommands.G0;
-	case 1:
-		return GCodeMovementCommands.G1;
-	default:
-		return GCodeMovementCommands.G0;
-	}
-}
-
-private int getHomogeneityBlock(byte[][] raster, int startPos,int line) {
-	byte startVal = raster[line][startPos];
-	byte testVal = startVal;
-	int blockLength = 0;
-	while(testVal == startVal) {
-		int endPos = startPos + blockLength;
-		if (endPos >= raster[0].length) {
-			break;
-		}
-		testVal= raster[line][(startPos + blockLength)];
-		blockLength++;
-	}
-	return blockLength;
-}
-
 private List<GCodeBlock> createHeader(){
 	List<GCodeBlock> header = new ArrayList<GCodeBlock>();
 	
@@ -317,18 +294,18 @@ private List<GCodeBlock> createHeader(){
 	//G92 E0
 	
 	header.add(new GCodeBlock("M107"));
-	header.add(new GCodeBlock("M190 S58"));
-	header.add(new GCodeBlock("M104 S218 T1"));
+	header.add(new GCodeBlock("M190 S44"));
 	header.add(new GCodeBlock("G28"));		
-	header.add(new GCodeBlock("G1 Z5 F300"));
+	header.add(new GCodeBlock("G1 Z0.12 F300"));
 			
-	header.add(new GCodeBlock("M109 S218 T1"));
+	header.add(new GCodeBlock("M109 S195 T0"));
 	header.add(new GCodeBlock("G21"));
 	header.add(new GCodeBlock("G90"));
 	header.add(new GCodeBlock("M82"));
 	header.add(new GCodeBlock("G92 E0"));
-	header.add(new GCodeBlock("T1"));
-	header.add(new GCodeBlock("G92 E0"));
+	header.add(new GCodeBlock("T0"));
+	header.add(new GCodeBlock("G92 X-200 Y-125"));
+	header.add(new GCodeBlock("M104 S195")); 
 	return header;
 }
 

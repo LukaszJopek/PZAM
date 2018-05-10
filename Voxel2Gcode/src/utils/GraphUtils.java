@@ -14,6 +14,7 @@ import core.reducer.SeriesReducer;
 import imageProcessing.graph.AdjacencyType;
 import imageProcessing.graph.Edge;
 import imageProcessing.graph.GcodeGraph;
+import imageProcessing.graph.GcodeGraph.ConnectingType;
 import imageProcessing.graph.Vertex;
 
 public class GraphUtils {
@@ -49,15 +50,62 @@ public class GraphUtils {
 		GcodeGraph gCodeGraph =  createStructure(cclMatrix, component, connectivity, startPoint);
 		gCodeGraphList.add(gCodeGraph);
 		Vertex unConnectedPart = findUnConnectedPart(cclMatrix, component);
-		while(unConnectedPart != null) {
+		while(unConnectedPart != null) {		
 			gCodeGraphList.add(createStructure(cclMatrix, component, connectivity, unConnectedPart));
 			//System.out.println("adding new gCodeGraph...");
 			unConnectedPart = findUnConnectedPart(cclMatrix, component);
 		}
+		//reConnectPath(gCodeGraphList);
 		
 		//System.out.println("gCodeGraph List size = "+gCodeGraphList.size());
 		
 		return gCodeGraphList;
+	}
+	
+	private static void reConnectPath(List<GcodeGraph> gCodeGraphList) {
+		for(int i=0;i<gCodeGraphList.size();i++) {
+			GcodeGraph gcodeGraph = gCodeGraphList.get(i);
+			if(gcodeGraph.getPath().size() < 3) {
+				if(tryReconnect(gCodeGraphList, gcodeGraph)) {
+					gCodeGraphList.remove(gcodeGraph);
+				}
+			}
+		}
+
+	}
+
+	private static boolean tryReconnect(List<GcodeGraph> gCodeGraphList, GcodeGraph gcodeGraph) {
+		for (int i=0; i< gCodeGraphList.size(); i++) {
+			
+			int pathSize = gCodeGraphList.get(i).getPath().size();
+			Point2D start = gcodeGraph.getPath().get(0);
+			Point2D end = gcodeGraph.getPath().get(gcodeGraph.getPath().size() - 1);
+			
+			if (gCodeGraphList.get(i).getPath().get(0).getDistanceinMM(start) < 2) {
+				//System.out.println("Reconnecting path [Connect to BEGIN].");
+				gCodeGraphList.get(i).addPointToPath(gcodeGraph.getPath(), ConnectingType.BEGIN);
+				return true;
+			}
+
+/*			else if (gCodeGraphList.get(i).getPath().get(0).getDistance(end) < 2) {
+				//System.out.println("Reconnecting path [Connect to END].");
+				gCodeGraphList.get(i).addPointToPath(gcodeGraph.getPath(), ConnectingType.END);
+				return true;
+			}*/
+			
+			else if (gCodeGraphList.get(i).getPath().get(pathSize - 1).getDistanceinMM(start) < 2) {
+				//System.out.println("Reconnecting path [Connect to BEGIN].");
+				gCodeGraphList.get(i).addPointToPath(gcodeGraph.getPath(), ConnectingType.BEGIN);
+				return true;
+			}
+			
+			else if (gCodeGraphList.get(i).getPath().get(pathSize - 1).getDistanceinMM(end) < 2) {
+				//System.out.println("Reconnecting path [Connect to END].");
+				gCodeGraphList.get(i).addPointToPath(gcodeGraph.getPath(), ConnectingType.END);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static GcodeGraph createStructure(int[][] cclMatrix, int component, Connectivity connectivity, Vertex startPoint) {
@@ -66,23 +114,21 @@ public class GraphUtils {
 
 			Edge path = pathTracking(cclMatrix, component, startPoint, connectivity);
 			if(path.getSize() > 0) {
-			//List<Point> reduced = SeriesReducer.reduce(ImageUtils.convertPoint2DToPoint(path.getAllPoints()), 0.01);
-			gCodeGraph.setReducedPath(ImageUtils.convertPoint2DToPoint(path.getAllPoints()));
-			//gCodeGraph.setReducedPath(reduced);
-			/*ArrayList<Point2D> points = new ArrayList<Point2D>();
-			for(Point p: reduced) {
-				points.add(new Point2D(p.getX(), p.getY()));
-			}*/
+				
+			//System.out.println("path length = "+path.getSize());
+			List<Point> reduced = SeriesReducer.reduce(ImageUtils.convertPoint2DToPoint(path.getAllPoints()), 0.01);
+			//gCodeGraph.setReducedPath(ImageUtils.convertPoint2DToPoint(path.getAllPoints()));
+			gCodeGraph.setReducedPath(reduced);
 			
+	
 			
-			
-/*			byte[][] image = ImageUtils.visualizeGraph2(points, cclMatrix.length, cclMatrix[0].length);
+/*			byte[][] image = ImageUtils.visualizeGraph2(path.getAllPoints(), cclMatrix.length, cclMatrix[0].length);
 			
 			ImageInfo imageInfo = new ImageInfo("",cclMatrix[0].length,cclMatrix.length, 1, 8);
 			try {
 				Display display = Display.getInstance();
 				display.DisplayImage(image, imageInfo , "Tracked Path List");
-				Thread.sleep(1);
+				Thread.sleep(100);
 			} catch (IOException | InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -125,6 +171,8 @@ public class GraphUtils {
 	}
 	private static Edge pathTracking(int[][] cclMatrix, int component,Vertex vertex, Connectivity connectivity) {
 		Edge edge = new Edge(vertex.getVertexType());
+		edge.addPoint(vertex.getPosition());
+		eraseVisitedPoint(cclMatrix, vertex.getPosition());	
 		Point2D nextPoint = getNextPoint(vertex.getPosition(), cclMatrix, component);
 		while(nextPoint != null) {
 			if(edge.containPoint(nextPoint)) {
@@ -272,7 +320,7 @@ public class GraphUtils {
 				edge.setEndVertex(v);
 				return true;
 			}
-			if (v.getPosition().getDistance(edge.getEndPoint()) <= max_dist) {
+			if (v.getPosition().getDistanceinMM(edge.getEndPoint()) <= max_dist) {
 				edge.setEndVertex(v);
 				return true;
 			}		
@@ -302,19 +350,21 @@ public class GraphUtils {
 		
 		for (int i=0; i<cclMatrix.length;i++) {
 			for(int j=0; j<cclMatrix[0].length;j++) {
+				if (getAdjacecnyType(cclMatrix, i, j, component) == AdjacencyType.End_Point){
+					return new Vertex(i,j,AdjacencyType.End_Point);
+				}
+			}
+		}	
+		
+		for (int i=0; i<cclMatrix.length;i++) {
+			for(int j=0; j<cclMatrix[0].length;j++) {
 				if (getAdjacecnyType(cclMatrix, i, j, component) == AdjacencyType.Connectivity){
 					return new Vertex(i,j,AdjacencyType.Connectivity);
 				}
 			}
 		}
 		
-		for (int i=0; i<cclMatrix.length;i++) {
-			for(int j=0; j<cclMatrix[0].length;j++) {
-				if (getAdjacecnyType(cclMatrix, i, j, component) == AdjacencyType.End_Point){
-					return new Vertex(i,j,AdjacencyType.End_Point);
-				}
-			}
-		}		
+	
 
 		return null;
 	}

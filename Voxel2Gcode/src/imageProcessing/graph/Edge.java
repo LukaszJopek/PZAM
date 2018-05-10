@@ -47,7 +47,15 @@ public class Edge {
 	}
 	
 	public boolean containPoint(Point2D point2d) {
+		for(Point2D p: points) {
+			if(isEquals(p.getxMM(), point2d.getxMM(),0.1) && isEquals(p.getyMM(), point2d.getyMM(),0.1)) {
+				return true;
+			}
+		}
 		return points.contains(point2d);
+	}
+	private boolean isEquals(double a, double b, double epsilon) {
+		return Math.abs(a - b) < epsilon;
 	}
 	
 	public AdjacencyType getStartPointType() {
@@ -96,7 +104,7 @@ public class Edge {
 	}
 
 	public double getPathLength() {
-		pathLength = points.get(0).getDistance(points.get(points.size()-1));
+		pathLength = points.get(0).getDistanceinMM(points.get(points.size()-1));
 		return pathLength;
 	}
 

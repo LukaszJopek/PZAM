@@ -12,6 +12,7 @@ import utils.GCodeUtils;
 import utils.Point2D;
 
 public class NextSlice implements State{
+	private double lastRectract = 0;
 	float currentE;
 	private State prevState = null;
 	private int slice;
@@ -62,10 +63,11 @@ public class NextSlice implements State{
 	@Override
 	public List<String> generateCGodeCommand() {
 		List<String> commands = new ArrayList<String>();
-		//commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " Jump to new slice"));
+		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " Jump to new slice"));
 		Double zmm = (double) slice; /*(double) geometry.convertPositionInMM((float) slice, Axis.OZ,0);*/
-		System.out.println("Z = "+zmm);
+		currentE = 0.0f;
 		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM(),(Double)nextPointPosition.getyMM(),zmm, null, getF()));
+		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G92,null,null,null, getE(), null));
 
 		return commands;
 	}
@@ -88,7 +90,7 @@ public class NextSlice implements State{
 	}
 	@Override
 	public double getDistance(Point2D previousPoint) {	
-		return nextPointPosition.getDistance(previousPoint);
+		return nextPointPosition.getDistanceinMM(previousPoint);
 	}
 
 	@Override
@@ -114,7 +116,18 @@ public class NextSlice implements State{
 		state.setCurrentE(currentE);
 		state.setGeometry(geometry);
 		state.setNextPoint(nextPointPosition);
+		state.setLastRectract(lastRectract);
 		return state;
+	}
+	@Override
+	public void setLastRectract(double filamentRetract) {
+		this.lastRectract = filamentRetract;
+		
+	}
+
+	@Override
+	public double getLastRectract() {
+		return lastRectract;
 	}
 
 }

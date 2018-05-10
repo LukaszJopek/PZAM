@@ -12,7 +12,8 @@ import utils.GCodeUtils;
 import utils.Point2D;
 
 public class Printing implements State {
-	float currentE = 0;
+	private double lastRectract = 0;
+	private float currentE = 0;
 	private State prevState = null;
 	private int slice;
 	private Geometry geometry;
@@ -87,8 +88,8 @@ public class Printing implements State {
 	}
 	@Override
 	public double getDistance(Point2D previousPoint) {	
-		this.segmentLength = nextPointPosition.getDistance(previousPoint);
-		return nextPointPosition.getDistance(previousPoint);
+		this.segmentLength = nextPointPosition.getDistanceinMM(previousPoint);
+		return nextPointPosition.getDistanceinMM(previousPoint);
 	}
 
 	@Override
@@ -114,7 +115,19 @@ public class Printing implements State {
 		state.setCurrentE(currentE);
 		state.setGeometry(geometry);
 		state.setNextPoint(nextPointPosition);
+		state.setLastRectract(lastRectract);
 		return state;
+	}
+
+	@Override
+	public void setLastRectract(double filamentRetract) {
+		this.lastRectract = filamentRetract;
+		
+	}
+
+	@Override
+	public double getLastRectract() {
+		return lastRectract;
 	}
 
 

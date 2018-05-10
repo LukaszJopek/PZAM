@@ -4,12 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import gcode.GCodeMovementCommands;
 import imageProcessing.Geometry;
 import imageProcessing.Geometry.Axis;
 import utils.GCodeUtils;
 import utils.Point2D;
 
 public class EndState implements State{
+	private double lastRectract = 0;
 	private float currentE = 0;
 	private int slice;
 	private Geometry geometry;
@@ -52,7 +54,11 @@ public class EndState implements State{
 
 	@Override
 	public List<String> generateCGodeCommand() {
-		return new ArrayList();
+		List<String> commands = new ArrayList<String>();
+		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " END STATE "));
+		commands.add("M104 S0 T0");
+		commands.add("M109 S0 T0");
+		return commands;
 	}
 
 	@Override
@@ -76,7 +82,7 @@ public class EndState implements State{
 	}
 	@Override
 	public double getDistance(Point2D previousPoint) {	
-		return nextPointPosition.getDistance(previousPoint);
+		return nextPointPosition.getDistanceinMM(previousPoint);
 	}
 
 	@Override
@@ -103,7 +109,18 @@ public class EndState implements State{
 		state.setCurrentE(currentE);
 		state.setGeometry(geometry);
 		state.setNextPoint(nextPointPosition);
+		state.setLastRectract(lastRectract);
 		return state;
+	}
+	@Override
+	public void setLastRectract(double filamentRetract) {
+		this.lastRectract = lastRectract;
+		
+	}
+
+	@Override
+	public double getLastRectract() {
+		return lastRectract;
 	}
 
 }

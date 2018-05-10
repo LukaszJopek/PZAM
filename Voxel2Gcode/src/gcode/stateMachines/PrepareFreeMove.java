@@ -12,6 +12,7 @@ import utils.GCodeUtils;
 import utils.Point2D;
 
 public class PrepareFreeMove implements State {
+	private double lastRectract = 0;
 	private float currentE;
 	private State prevState = null;
 	private int slice;
@@ -59,13 +60,15 @@ public class PrepareFreeMove implements State {
 		
 		//commands.add(GCodeUtils.createCommand(GCodeMovementCommands.Comment, " Prepare Free Move "));
 		if(prevState.getState().equals(StateType.FM)){
-			currentE = (float) (currentE + GCodeProperties.filamentConstFactor + GCodeProperties.filamentPrinterConst);
+			currentE = (float) (currentE + lastRectract);
 			commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G0,null, null, null, currentE, null));
 		}
 			
-		currentE = (float) (currentE +(nextPointPosition.getDistance(previousPoint)));
+		double filamentDistance = nextPointPosition.getDistanceinMM(previousPoint);
+		lastRectract = (filamentDistance * GCodeProperties.filamentRetractRatio);
+		currentE = (float) (currentE +filamentDistance);
 		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G1,(Double)nextPointPosition.getxMM() , (Double)nextPointPosition.getyMM(),null, currentE, null));
-		currentE = (float) (currentE -(GCodeProperties.filamentConstFactor));
+		currentE = (float) (currentE - lastRectract);
 		commands.add(GCodeUtils.createCommand(GCodeMovementCommands.G0,null, null, null, currentE, getF()));
 		return commands;
 	}
@@ -88,7 +91,7 @@ public class PrepareFreeMove implements State {
 	}
 	@Override
 	public double getDistance(Point2D previousPoint) {	
-		return nextPointPosition.getDistance(previousPoint);
+		return nextPointPosition.getDistanceinMM(previousPoint);
 	}
 
 	@Override
@@ -113,6 +116,17 @@ public class PrepareFreeMove implements State {
 		state.setCurrentE(currentE);
 		state.setGeometry(geometry);
 		state.setNextPoint(nextPointPosition);
+		state.setLastRectract(lastRectract);
 		return state;
+	}
+	@Override
+	public void setLastRectract(double filamentRetract) {
+		this.lastRectract = filamentRetract;
+		
+	}
+
+	@Override
+	public double getLastRectract() {
+		return lastRectract;
 	}
 }

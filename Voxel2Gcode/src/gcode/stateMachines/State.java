@@ -12,6 +12,8 @@ public interface State {
 	public void setPreviousPoint(Point2D previousPoint);
 	public void setNextPoint(Point2D position);
 	public void setGeometry(Geometry geometry);
+	public void setLastRectract(double filamentRetract);
+	public double getLastRectract();
 	public StateType getState();
 	public void setCurrentE(float currentE);
 	public float getE();

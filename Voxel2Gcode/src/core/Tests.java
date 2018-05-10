@@ -36,6 +36,9 @@ public class Tests {
 		System.out.println("Command = "+s);
 		s = fsm.generateNewCommnand(EventType.LAYER_END, new Point2D(804, 804), 0);
 		System.out.println("Command = "+s);
+		
+		MainGuiClass mainGuiClass = new MainGuiClass();
+		mainGuiClass.createGUI();
 	}
 
 }

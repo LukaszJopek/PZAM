@@ -12,6 +12,7 @@ import utils.GCodeUtils;
 import utils.Point2D;
 
 public class FreeMove implements State{
+	private double lastRectract = 0;
 	private float currentE = 0;
 	private State prevState = null;
 	private int slice;
@@ -83,7 +84,7 @@ public class FreeMove implements State{
 
 	@Override
 	public double getDistance(Point2D previousPoint) {	
-		return nextPointPosition.getDistance(previousPoint);
+		return nextPointPosition.getDistanceinMM(previousPoint);
 	}
 
 	@Override
@@ -109,7 +110,18 @@ public class FreeMove implements State{
 		state.setCurrentE(currentE);
 		state.setGeometry(geometry);
 		state.setNextPoint(nextPointPosition);
+		state.setLastRectract(lastRectract);
 		return state;
+	}
+	@Override
+	public void setLastRectract(double filamentRetract) {
+		this.lastRectract = filamentRetract;
+		
+	}
+
+	@Override
+	public double getLastRectract() {
+		return lastRectract;
 	}
 
 }

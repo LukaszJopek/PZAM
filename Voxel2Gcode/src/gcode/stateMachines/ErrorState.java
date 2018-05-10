@@ -10,6 +10,7 @@ import utils.GCodeUtils;
 import utils.Point2D;
 
 public class ErrorState implements State{
+	private double lastRectract = 0;
 	float currentE;
 	private State prevState = null;
 	private int slice;
@@ -89,6 +90,16 @@ public class ErrorState implements State{
 	public State getClone() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	@Override
+	public void setLastRectract(double filamentRetract) {
+		this.lastRectract = lastRectract;
+		
+	}
+
+	@Override
+	public double getLastRectract() {
+		return lastRectract;
 	}
 
 }
